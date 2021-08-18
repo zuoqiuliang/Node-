@@ -83,8 +83,57 @@
 // console.log(util.isDeepStrictEqual)
 
 
-let fs=require('fs')
-let path =require('path')
-fs.readFile(path.resolve( __dirname,'./src/myFile/a.txt'),(err,content)=>{
-	console.log(content)
+// let fs=require('fs')
+// let path =require('path')
+// fs.readFile(path.resolve( __dirname,'./src/myFile/a.txt'),(err,content)=>{
+// 	console.log(content)
+// })
+// fs.writeFile(path.resolve( __dirname,'./src/myFile/hs'),'写入的字',{
+// 	flag:'a'
+// },()=>{
+// 	console.log(222)
+// })
+
+// fs.createReadStream(path.resolve( __dirname,'./src/myFile/a.txt'),{
+// 	encoding:'utf-8',
+// 	// start:
+// 	// end:
+// 	highWaterMark:64*1024
+
+// })
+// fs.createWriteStream()
+
+
+// let net=require('net')
+// net.createConnection()
+// net.createServer()
+
+// let http=require('http')
+// let request=http.request('http://yuanjin.tech:5005/api/movie',(resp)=>{
+//     console.log(resp.statusCode,resp.headers)//得到相应状态码和响应头
+//     let str=''
+//     resp.on('data',(chunk)=>{
+//        str+= chunk.toString('utf-8')
+//     })
+//     resp.on('end',()=>{
+//         console.log(JSON.parse( str ))
+//     })
+// })
+// request.end()//表示get请求没有请求体直接就可以发送了，告诉服务器不用等了，可以返回响应数据了
+
+
+let http=require('http')
+let server=http.createServer((resp)=>{
+    //这里监听有没有请求来了
+  console.log(  resp.url )
+})
+
+server.listen({
+    host: 'localhost',
+  port: 80,
+  exclusive: true
+})
+
+server.on('listening',()=>{
+    console.log(123466)
 })
