@@ -122,18 +122,18 @@
 // request.end()//表示get请求没有请求体直接就可以发送了，告诉服务器不用等了，可以返回响应数据了
 
 
-let http=require('http')
-let server=http.createServer((resp)=>{
-    //这里监听有没有请求来了
-  console.log(  resp.url )
-})
+// let http=require('http')
+// let server=http.createServer((resp)=>{
+//     //这里监听有没有请求来了
+//   console.log(  resp.url )
+// })
 
-server.listen({
-    host: 'localhost',
-  port: 80,
-  exclusive: true
-})
+// server.listen({
+//     host: 'localhost',
+//   port: 80,
+//   exclusive: true
+// })
 
-server.on('listening',()=>{
-    console.log(123466)
-})
+// server.on('listening',()=>{
+//     console.log(123466)
+// })

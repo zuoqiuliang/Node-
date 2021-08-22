@@ -282,3 +282,196 @@ net.createServer()，返回一个scoket对象
 		- 代表：MangoDB、Redis、Membase
    3. 面向对象数据库---前端用不到、java等强类型的语言用的
 
+### MySql安装使用
+
+   > mysql -uroot -p :进入mysql命令交互
+   > show variables like 'character\_set\_%';    查看命令
+	 > net stop mysql80    在windows系统下关闭mysql服务
+	 > net start mysql80   在windows系统下开启mysql服务
+	 > show databases   查看当前拥有的数据库
+ 
+### 数据库设计(DDL)
+1. SQL
+   1. 结构化查询语言(声明式语言 如html、css)，大部分关系型数据都有着基本一致的SQL语法
+   2. 分支：
+      - DDL：数据定义语言，操作数据库对象，数据库对象中包含库、表、视图、存储过程
+      - DML:数据操控语言，用来操作数据库中的记录
+      - DCL：数据控制语句，操作用户权限
+2. 管理库
+   1. 创建数据库 create database 库名
+   2. 删除数据库 drop database 库名
+   3. 也可以直接使用Navicat图形化界面的方式创建库或者删除库
+3. 管理表
+   1. 创建表 
+    > 通过Navicat图形化界面创建或者DDL命令行创建表
+    create table 数据库名 表名
+    - 字段：就是列，包含字段名(列名)、字段类型、是否为null、自增、默认值
+      - 字段类型
+        1. bit：0或1，false或true
+        2. int：占32位，整数
+        3. decimal(M,N):能精确计算数字，M是总数字数量，N是小数数量(例如：3.1415926 M是8，N是7)
+        4. char(n):固定长度n位字符
+        5. varchar(n):长度可变，最大数量为n的字符
+        6. text:大量字符(例如存文章大量字符)
+        7. date:仅日期
+        8. datetime:日期和时间
+        9. time:仅时间
+   2. 删除表
+   > 通过Navicat图形化界面创建或者DDL命令行删除表
+   drop table 表名 数据库名
+4. 主键和外键
+   1. 主键
+      1. 根据设计原则，每张表都要有主键(通常叫id，类型可为数字、字符串、uuid)
+      2. 主键需要满足要求：主键用来保证某一列必须唯一、不能更改、无业务含义(学号、身份证号、手机号都不可以做主键，因为会变化。)
+   2. 外键
+      1. 用于产生表关系的列
+      2. 外键列会连接到另一张表的主键或自己的主键
+5. 表关系
+   1. 一对一：一个A对应一个B，一个B对应一个A，例如用户和用户信息，把任意一张表的主键同时设置为一张外键
+   2. 一对多：一个A对应多个B，一个B对应一个A,A和B是一对多，B和A是多对一。例如：班级和学生，用户和文章。在多一端的表上设置外键，对应到另一张表的主键。
+   3. 多对多：一个A对应多个B，一个B对应多个A。例如学生和老师。需要新建一张关系表，关系表至少包含两个外键，分别对应两张表
+6. 数据库三大设计范式
+   1. 要求数据库表的每一列都是不可分割的原子数据项
+   2. 非主键列必须依赖于主键列
+   3. 非主键列必须直接依赖于主键列
+
+
+### 表记录的增删改(DML)
+1. 增(Create)
+   ```sql
+      -- 数据库  增
+   <!-- student是学生表 -->
+   INSERT INTO `student`(id,name,birthday,sex,calssid)
+   VALUES('1','左','2021-8-21',true,'1')
+   ```
+2. 删(Delete)
+   **删除操作只能删表里的行(记录)，不能删表里的列(字段)**
+   ```sql
+      -- 数据库 删
+      -- 删除id为4的记录
+      DELETE FROM student
+
+      where id=4  
+
+   ```
+3. 改(Update)
+   ```sql
+      -- 数据库  改
+
+      UPDATE `student` SET name='左亮亮'
+      WHERE id=1
+   ```
+4. 查(Retrieve)
+   **单表基本查询**
+   1. select
+   ```sql
+      select 字段 from `数据源(表)`  //查询表中的某个字段
+      1. as
+      select 字段 as 别名 from  `数据源(表)` //给查到的某个字段起个别名
+      select 字段 别名 from  `数据源(表)`//给查到的某个字段起个别名
+      
+      2. *
+      select * from `数据源(表)` //查询表中所有字段(列)
+      
+      3. case
+      //写法1
+      select case ismale  
+      when 1 then '男'  //sql中的when相当于js中的if或者else if
+      else '女'
+      end as sex from `员工表`  //表示查询员工表中ismale字段如果是1则改成男0改成女，并且把ismale字段改成sex
+      //写法2
+      select case   
+      when ismale= 1 then '男' 
+      else '女'
+      end as sex  from `员工表`   //表示查询员工表中ismale字段如果是1则改成男0改成女，并且把ismale字段改成sex
+
+      4. distinct(去重)
+      select distinct location from `员工表` //在员工表中去重地址相同的
+
+      select distinct `location`,ismale from `员工表` //在员工表中去重地址和名字都相同的员工
+
+   ```
+   2. from 
+   from后面跟表名
+   ```sql
+   select 字段 from `数据源(表)`  //查询表中的某个字段
+
+   ```
+   3. where
+   对查询表结果进一步筛选
+   ```sql
+      1. =
+      select * from `员工表(表)` where ismale=1//查询表中ismale字段中等于1的员工
+      查询顺序为：从员工表中一行一行匹配ismale=1，如果这一行ismale不等于1则抛弃这一行，如果这一行ismale=1则运行select * from `员工表(表)`将这一行显示到结果表中
+      
+      2. in
+      //部门表中的companyId是外键，连接到公司表的主键id，公司表id只有1、2、3
+      select * from `部门表` where in companyId(1,2,3)//查询companyId在1或2或3中的部门，in代表在某个区间之中
+
+      3. is
+      select * from `员工表` where email is null//查询员工表中email为null的员工
+      4. is not
+      select * from `员工表` where email is not null//查询员工表中email不是null的员工
+
+      5. > < >= <=
+      select * from `员工表` where salary >=10000 //查询员工表中工资大于等于10000元的员工
+
+      6. between  and
+      select * from `员工表` where salary between 10000 and 12000 //查询员工表中薪资在10000k到12000k之间的员工
+
+      7. like(模糊查询)
+      select * from `员工表` where `name` like '%袁%' //查询员工表中name字段中包含袁字的所有字段信息 
+
+      select * from `员工表` where `name` like '袁%' //查询员工表中name字段中袁字为首位的所有字段信息 
+
+      select * from `员工表` where `name` like '袁_' //查询员工表中名字为两个字符的员工所有记录信息，_下划线代表一个字符长度
+
+      8. and  (多个条件并列) 查询时and优先级大于or
+      select * from `员工表` where `name` like '张%' and ismale is 0 and salary >=10000 //查询员工表中名字姓张的并且是女生并且薪资在10000元以上的
+
+      9. or(或者)
+      select * from `员工表` where `name` like '张%' and ismale is 0 and salary >=10000 or birthday >='1996-1-1' //查询员工表中名字姓张的并且是女生并且薪资在10000元以上的或者生日大于等于1996年1月1号的，满足这两个条件其一就显示
+    ```
+
+   4. order by
+   order by 默认是升序排序
+   ```sql
+      1. asc 升序
+      select * from `员工表` where `name` like '张%' and ismale is 0 and salary >=10000 
+      order by salary asc
+       //查询员工表中名字姓张的并且是女生并且薪资在10000元以上的员工并升序排序，排序是在查出来之后再排序
+
+      2. desc 降序
+      select * from `员工表` where `name` like '张%' and ismale is 0 and salary >=10000 
+      order by salary desc
+      //查询员工表中名字姓张的并且是女生并且薪资在10000元以上的员工并降序排序，排序是在查出来之后再排序
+
+      3. 多个升序降序一起用
+      select * from `员工表` where `name` like '张%' and ismale is 0 and salary >=10000 
+      order by salary desc, sex asc//将结果表按照薪资降序，性别升序显示
+   ```
+   5. limit(n,m) (跳过n条数据取出m条数据)
+   ```sql
+      select * from `员工表` limit 2,3//在所有员工中跳过前两条记录，从第二条记录之后取出3条记录
+
+   ```
+
+ > 查询顺序：from > where > select > order by > limit
+
+   **联表查询**
+   1. 笛卡尔积
+      两张表的数量相乘
+      ```sql
+         select * from `员工表` `公司表`
+      ```
+   2. 左连接 left join
+   3. 右连接 right join
+   4. 内连接 inner join，最终将多张表连接在一张表显示
+      ```sql
+         select 员工表.name as aname , 部门表.name as bname,公司表.name as cname  from `员工表` 
+         inner join  `部门表` on 员工表.id=部门表.id 
+         inner join  `公司表` on 部门表.id=公司表.id
+
+         //筛选员工表.id=部门表.id ，并且部门表.id=公司表.id的name字段，on为筛选条件
+      ```
+      必须是满足条件的才可筛选出来
