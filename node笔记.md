@@ -475,3 +475,263 @@ net.createServer()，返回一个scoket对象
          //筛选员工表.id=部门表.id ，并且部门表.id=公司表.id的name字段，on为筛选条件
       ```
       必须是满足条件的才可筛选出来
+
+### 函数和分组
+1. 函数
+    **内置函数**
+    1. 数学函数
+         1. ABS(x) 返回x的绝对值
+         2. CEILING(x)  向上取整，返回大于x的最小整数，别名CEIL(x)
+         3. FLOOR(x) 向下取整，返回小于x的最小整数
+         4. MOD(x,y) 取模，返回x/y的模(余数)
+         5. PI()  返回PI的值，(圆周率)
+         6. RAND() 返回0-1之间的随机数
+         7. ROUND(x,y) 对x四舍五入，保留y个小数
+               ``` select ROUND(3.146,2) //返回3.15 ```
+         8. TRUNCATE(x,y) 对x截断y位小数的结果
+        			 ``` 
+      					     select TRUNCATE(3.146,2) //返回3.14
+      				 ```
+   	2. 聚合函数 **最终显示一个字段名，一个值**
+   		1. AVG(col) 返回指定列的平均值。故在select查询时只能查一列，即select AVG(列) from `表`  不可以
+   			select AVG(列),字段 from `表`这样写,但是可以和聚合函数写多个
+   			```sql
+   				select AVG(salary) from `员工表` //得到员工表中salary这一列所有人的平均值
+   			```
+   		2. COUNT(col) 查询指定列中非null值的个数
+   			```sql
+   				select COUNT(id) from `员工表` //查询员工id数量，由于每个员工都有唯一id，所以可叫做查询所有员工数量
+   			```
+			3. SUM(col) 返回指定列中所有值之和
+			4. MIN(col)  返回指定列中最小值
+			5. MAX(col) 返回指定列中最大值
+				```sql
+					select COUNT(id) as 员工总数
+				  AVG(salary) as 平均薪资,
+					SUM(salary) as 所有员工薪资之和,
+					MAX(salary) as 所有员工最高薪资,
+					MIN(salary) as 所有员工最低薪资
+					from `员工表`
+				```
+	3. 字符函数
+		1. CONCAT(字段1,字段2...) 将字段1,字段2等连接成一个字符串
+		2. CONCAT_WT(sep,字段1,字段2...)  将字段1,字段2等连接成一个字符串,并使用sep进行分割
+		3. TRIM(str)  去掉字符串首部和尾部的所有空格
+		4. LTRIM(str) 从字符串str中切掉开头的空格
+		5. RTRIM(str) 从字符串str中切掉结尾的空格
+
+
+
+
+	4. 日期
+		1. CURRENT_DATE() 或CURDATE() 返回当前日期 2021-08-23
+		2. CURRENT_TIME() 或CURTIME() 返回当前时间时分秒 13:54:11 
+		3. TIMESTAMPDIFF(unit,datetime1,datetime2)  返回datetime1到datetime2之间相隔的unit值，unit是用于指定相隔的年或月或日等
+			unit可以写：
+			1. microsecond 毫秒
+			2. second 秒
+			3. minute 分
+			4. hour 时
+			5. day 天
+			6. week 周
+			7. month 月
+			8. quarter 季度
+			9. year 年
+
+
+
+
+    自定义函数
+      由于我们不是后端用不到写自定义函数
+2. 分组
+   
+	 分组后只能查询分组的列和聚合列
+
+
+### 视图
+操作视图属于DDL
+
+视图是缓存的表格，每次查缓存的表格
+
+ ```sql
+   create view `数据库` `视图名` as 
+   员工表.name as aname , 部门表.name as bname,公司表.name as cname  from `员工表` 
+   inner join  `部门表` on 员工表.id=部门表.id 
+   inner join  `公司表` on 部门表.id=公司表.id
+
+ ```
+
+
+## 数据驱动和ORM框架
+
+### Mysql驱动程序
+1. 什么是驱动程序？
+   - 驱动程序是连接内存和其他存储介质的桥梁
+   - mysql驱动程序是连接内存数据和mysql数据的桥梁
+   - mysql驱动程序常用mysql(官方)和mysql2(第三方)
+2. mysql2的使用
+   ```sql
+		写法1：回调方式
+
+			// 导入mysql2包
+			const mysql = require('mysql2');
+
+			// 创建一个数据库连接
+			const connection = mysql.createConnection({
+				host: 'localhost',
+				user: 'root',
+				database: 'test'
+			});
+
+			运行sql查询语句
+			connection.query(
+				'SELECT * FROM `student`',
+				function(err, results, fields) {
+					console.log(results); // 查询结果
+					// console.log(fields); // fields contains extra meta data about results, if available
+				}
+			);
+			<!-- 向数据库增加语句
+			connection.query(
+					'insert into `student` (id,name,birthday,sex) values("2","MR.right左","2021-08-24",true);',
+					function(err, results, fields) {
+							console.log(err)
+						console.log(results); // 查询结果
+						// console.log(fields); // fields contains extra meta data about results, if available
+					}
+				); -->
+			<!-- 修改数据库中的记录
+			connection.query(
+					'update `student` set name="Mr.right左2" where id=4',
+					function(err, results, fields) {
+							console.log(err)
+						console.log(results); // 查询结果
+						// console.log(fields); // fields contains extra meta data about results, if available
+					}
+				); -->
+
+			<!-- 删除数据库中的记录
+			connection.query(
+					'delete from `student` where id=4',
+					function(err, results, fields) {
+							console.log(err)
+						console.log(results); // 查询结果
+						// console.log(fields); // fields contains extra meta data about results, if available
+					}
+				); -->
+
+
+		写法2：使用promise的方式
+		async function main() {
+			// 导入mysql2/Promise包
+			const mysql = require('mysql2/promise');
+			//创建一个数据库连接
+			const connection = await mysql.createConnection({host:'localhost', user: 'root', database: 'test'});
+			// 写sql语句
+			const [rows, fields] = await connection.query('SELECT * FROM `student`);
+		}
+
+
+
+
+
+
+		注意：由于会有sql注入的问题，以上两种写法不行hhhhh，需要使用下面第三条的写法
+	 ```
+
+3. 防止sql注入
+
+	> 用户通过connection.query(sql语句) 注入sql语句到最终查询中，导致sql与预期不符，比如我想查询某个记录，结果由于用户sql注入导致数据库最终增加或者删除或者修改了某个记录，最终数据库的展示与预期不符了。
+
+	为了防止sql注入，sql支持变量的写法，我们在connection.query(sql语句+'变量')这样就不会有字符串拼接的问题了，sql会把变量当成一个整体而不是一个sql语句
+
+	```sql
+
+			写法一：回调方式
+
+			// 导入mysql2包
+			const mysql = require('mysql2');
+
+			// 创建一个数据库连接
+			const connection = mysql.createConnection({
+				host: 'localhost',
+				user: 'root',
+				database: 'test'
+			});
+
+			// 书写sql语句
+			connection.execute(
+				'SELECT * FROM `student` WHERE `name` = ? AND `age` > ?',
+				['Page', 45],
+				function(err, results) {
+					console.log(results);
+				}
+			);
+
+
+
+			写法二：promise方式
+			async function main() {
+				// 导入mysql2/Promise包
+				const mysql = require('mysql2/promise');
+				//创建一个数据库连接
+				const connection = await mysql.createConnection({host:'localhost', user: 'root', database: 'test'});
+				// 写sql语句
+				const [rows, fields] = await connection.execute('SELECT * FROM `student`,['Morty', 14]);
+			}
+
+	```
+
+	> 由于sql注入的问题，使用connection.execute()方法来解决，其中语句中的变量用?来表示，第二个人参数是个数组，数组中每一个值对应sql语句中每一个变量
+
+4. 连接池
+
+   - 由于可能50个用户同时请求服务器，那么服务器就会开50个连接与数据库，如果我们没有及时清理服务器与数据库的连接会随着用户的请求连接越来越多，最终导致服务器异常卡顿。  使用连接池能有效解决这种问题，连接池可以规定一定数量连接，如果再有用户请求就等着。
+	 使用连接池会自动搞定连接回收重用等，特别方便。
+
+		```sql
+
+			// 引入mysql2包
+			const mysql = require('mysql2');
+
+			// 创建一个连接池
+			const pool = mysql.createPool({
+				host: 'localhost',
+				user: 'root',
+				database: 'test',
+				waitForConnections: true,//连接池连接数量用满时是否需要等待
+				connectionLimit: 10,//连接池最大连接数量
+				queueLimit: 0,//排队队列长度，0代表不限制长度，多少都行
+			});
+
+
+			async function main() {
+					// 写sql语句
+					const [rows, fields] = await pool.execute('SELECT * FROM `student`,['Morty', 14]');
+					
+			}
+
+		```
+
+
+### Sequelize简介
+
+1. ORM(对象关系映射到数据库)
+  - ORM可以自动将程序中的对象与数据库关联
+  - ORM框架会隐藏具体的数据库底层细节，让开发者使用同样的数据操作接口，完成对不同数据库的操作；  ORM提供的API无须使用sql语句，它会根据具体的调用方式，自动生成最合适的sql语句操作数据。
+	![avatar](http://m.qpic.cn/psc?/V51Mju1I4Uz5tx4Tu1Fj4XfvFp1oGJ7w/45NBuzDIW489QBoVep5mcQWuglMWIS7JLDMKjdwHXI2nUemQNg1ZHG2zO6usbHm7PEuQ018vWPRX40k9FO9PVUmzqFhSpb.VFv2A2GrkcDM!/b&bo=oAU4BAAAAAABF6k!&rf=viewer_4)
+
+	- ORM优势：
+    1. 开发者不用关心数据库，仅需关心对象
+    2. 可轻易完成数据库移植
+    3. 无须拼接sql语句即可完成精准查询
+2. Node中的ORM框架
+   主要包含两个 ：Sequelize和TypeORM
+   Sequelize支持js和ts 比较成熟
+	 TypeORM只支持ts  不成熟
+
+### 模型定义和同步
+
+
+	
+   
