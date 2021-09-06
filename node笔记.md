@@ -570,7 +570,7 @@ net.createServer()，返回一个scoket对象
    - mysql驱动程序是连接内存数据和mysql数据的桥梁
    - mysql驱动程序常用mysql(官方)和mysql2(第三方)
 2. mysql2的使用
-   ```sql
+   ```js
 		写法1：回调方式
 
 			// 导入mysql2包
@@ -645,7 +645,7 @@ net.createServer()，返回一个scoket对象
 
 	为了防止sql注入，sql支持变量的写法，我们在connection.query(sql语句+'变量')这样就不会有字符串拼接的问题了，sql会把变量当成一个整体而不是一个sql语句
 
-	```sql
+	```js
 
 			写法一：回调方式
 
@@ -689,7 +689,7 @@ net.createServer()，返回一个scoket对象
    - 由于可能50个用户同时请求服务器，那么服务器就会开50个连接与数据库，如果我们没有及时清理服务器与数据库的连接会随着用户的请求连接越来越多，最终导致服务器异常卡顿。  使用连接池能有效解决这种问题，连接池可以规定一定数量连接，如果再有用户请求就等着。
 	 使用连接池会自动搞定连接回收重用等，特别方便。
 
-		```sql
+		```js
 
 			// 引入mysql2包
 			const mysql = require('mysql2');
@@ -731,7 +731,185 @@ net.createServer()，返回一个scoket对象
 	 TypeORM只支持ts  不成熟
 
 ### 模型定义和同步
+  > 模型就是数据库中的表
+ 由于Sequelize和数据库没有关联，所以需要下载Sequelize和想要使用的数据驱动
 
+   ```javascript
+      //下载准备
+      npm install --save sequelize //下载sequelize
+      npm install --save mysql2  //下载mysql2数据驱动
+
+      //连接准备
+      const { Sequelize } = require('sequelize'); //导入sequelize包
+
+      //数据池实例
+      const sequelize = new Sequelize('数据库名', 'root', '密码', {
+      host: 'localhost',
+      dialect: 'mysql'
+      /* 选择 'mysql' | 'mariadb' | 'postgres' | 'mssql' 其一 */
+      });
+
+      //测试连接是否成功
+      async function test() {
+         try {
+            await sequelize.authenticate(); //该方法用来测试连接
+            console.log('Connection has been established successfully.');
+         } catch (error) {
+            console.error('Unable to connect to the database:', error);
+         }
+      }
+      test()
+
+
+      //模型定义
+      const sequelize=require('./db');
+      const { DataTypes } = require('sequelize');
+
+      const Admin = sequelize.define('模型名', {
+         // 在这里定义模型属性(相当于配置标的列/字段)
+         loginId: {
+            type: DataTypes.STRING,//loginId这一列要求为字符串类型
+            allowNull: false,//不允许为null
+         },
+         loginPwd: {
+            type: DataTypes.STRING,
+            allowNull:false
+         },
+         name: {
+            type: DataTypes.STRING,
+            allowNull:false
+         }
+      },{
+         freezeTableName:true,//代表模型名和表名相同，如果没有这个属性则表名比模型名多一个s
+         tableName:'administrator',//直接写表名
+         createdAt:'createtime',//代表创建该记录的时间如果想要显示该字段则自定义值，如果不想要设置false
+         updatedAt:'更新时间',//代表更新该记录的时间如果想要显示该字段则自定义值，如果不想要设置false
+         paranoid:true,//设置该属性后该表的数据不会真正删除，而是增加一列deletedAt,记录删除的时间，通过判断deletedAt是否有时间来判断该数据是否删除了。
+      });
+      
+
+      Admin.sync({ //用来同步单个模型
+         alter:true
+      })
+
+      //sequelize.sync()该方法会同步所有模型，一般在最开始执行一遍就行
+      sequelize.sync({alter:true}).then((res)=>{
+         console.log('全部模型同步完成了')
+      })
+      module.exports=Admin //导出这个模型
+
+
+   ```
+
+ - sequelize联合
+ 假设我们有两个模型 A 和 B. 告诉 Sequelize 两者之间的关联仅需要调用一个函数：
+
+ ```js
+   const A = sequelize.define('A', /* ... */);
+   const B = sequelize.define('B', /* ... */);
+
+   A.hasOne(B); // A 有一个 B
+   A.belongsTo(B); // A 属于 B
+   A.hasMany(B); // A 有多个 B
+   例如： Class.hasMany(Student)// Class拥有多个Student，设置了Student的外键
+   A.belongsToMany(B, { through: 'C' }); // A 属于多个 B , 通过联结表 C
+
+   A.hasOne(B) 关联意味着 A 和 B 之间存在一对一的关系,外键在目标模型(B)中定义.
+
+   A.belongsTo(B)关联意味着 A 和 B 之间存在一对一的关系,外键在源模型中定义(A).
+
+   A.hasMany(B) 关联意味着 A 和 B 之间存在一对多关系,外键在目标模型(B)中定义.
+
+   A.belongsToMany(B, { through: 'C' }) 关联意味着将表 C 用作联结表,在 A 和 B 之间存在多对多关系. 具有外键(例如,aId 和 bId). Sequelize 将自动创建此模型 C(除非已经存在),并在其上定义适当的外键.
+
+ ```
 
 	
    
+
+### 模型的增删改
+
+后端项目搭建结构
+![avatar](http://m.qpic.cn/psc?/V51Mju1I4Uz5tx4Tu1Fj4XfvFp1oGJ7w/45NBuzDIW489QBoVep5mcVw*cM1KjdjwD86Q.uaAZU7sxvZm2MakE4ayhH4tu4.Ix1CmAhaNRM*rarhzlzNfPaz8MOZMnt.uwbf5JArsy4Q!/b&bo=oAU4BAAAAAABF6k!&rf=viewer_4)
+
+通过模型实例来对数据库增加
+
+1. 创建模型实例
+   
+   1. build方法创建
+    build 方法返回一个模型实例,该模型实例 表示 可以 映射到数据库的数据. 为了将这个实例真正保存(即持久保存)在数据库中,应使用 save 方法 
+    ```js
+      const obj=模型.build({
+         loginId:'aaa',
+         loginPwd:'123456'
+      })
+      await obj.save()
+    ```
+    2. create方法创建
+    Sequelize提供了 create 方法,该方法将上述的 build 方法和 save 方法合并为一个方法,create是个异步方法返回promise
+    ```js
+    const jane = await User.create({ name: "Jane" });
+    ```
+    - save 是一种异步方法. 实际上,几乎每个 Sequelize 方法都是异步的. build 是极少数例外之一.
+
+2. 模型的增加
+   向Admin模型中增加数据：
+   ```js
+      build方式：
+      const Admin=require('./models/admin');
+      let adn=Admin.build({
+         loginId:'111111',
+         loginPwd:'123456',
+         name:'zql'
+      })
+      adn.save().then(()=>{
+         console.log('添加admin表数据成功了')
+      })
+
+      create方式：
+      const Admin=require('./models/admin');
+      Admin.create({
+         loginId:'111111',
+         loginPwd:'123456',
+         name:'zql'
+      }).then(()=>{
+         console.log('添加admin表数据成功了')
+      })
+      
+   ```
+   向Admin模型中删除数据记录：
+   ```js
+      方式一：使用模型方法创建出的条目上的方法删除
+      const Admin=require('../models/admin')//导入Admin模型
+      const ins= await Admin.findByPk(adminId);//根据adminId主键返回一个记录条目
+      ins.destroy()//删除该条目，就把对应的记录删除了
+
+
+      方式二：使用模型上的方法删除
+      Admin.destroy({
+         where:{ //筛选条件，要删除哪里的条件
+            id:adminId,//条件是id=adminId
+         }
+      })
+   ```
+
+   向Admin模型中修改数据
+   ```js
+   方式一：使用模型方法创建出的条目上的方法修改
+   const Admin=require('../models/admin')//导入Admin模型
+   const ins= await Admin.findByPk(adminId);
+    ins.loginId='liang';
+    ins.save();
+
+
+   方式二：使用模型上的方法修改
+   Admin.update(
+      {
+      loginId:'liang' //参数一是修改的内容
+      },{
+         where:{ //筛选条件,要修改哪里的条件
+            id:adminId,//条件是id=adminId
+         }
+      })
+
+   ```

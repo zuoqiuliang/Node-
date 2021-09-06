@@ -139,3 +139,79 @@
 // })
 
 
+
+
+
+// const sequelize=require('./models/sync')
+
+// async function test() {
+//     try {
+//         await sequelize.authenticate(); //该方法用来测试连接
+//         console.log('Connection has been established successfully.');
+//     } catch (error) {
+//         console.error('Unable to connect to the database:', error);
+//     }
+// }
+// test()
+
+
+// const Admin=require('./models/admin');
+// let adn=Admin.build({
+//     loginId:'111111',
+//     loginPwd:'123456',
+//     name:'zql'
+// })
+// adn.save().then(()=>{
+//     console.log('添加admin表数据成功了')
+// })
+
+
+// const adminService=require('./services/adminService');
+
+// adminService.addAdmin({
+//     loginId:'bbb',
+//     loginPwd:'123456',
+//     name:'左'
+// }).then((res)=>{
+//     console.log(res)
+// })
+
+// adminService.deleteAdmin(1);
+// adminService.updateAdmin(2)
+
+
+// const classService=require('./services/calssService');
+// classService.addClass(3)
+// classService.deleteClass(1)
+// classService.updateClass(2,{
+//     name:'网2',
+//     openDate:'2017-09-02'
+// })
+
+// const studentService=require('./services/studentService')
+// studentService.addStudent(1)
+// studentService.deleteStudent(1)
+// studentService.updateStudent(2,{
+//     name:'李好',
+//     birthday:'2000-10-01',
+//     sex:true,
+//     mobile:'15071523698'
+// })
+
+
+// const Book = require('./models/Book');
+// const bookService=require('./services/bookService');
+
+// // bookService.addBook(2);
+// bookService.updateBook({
+//     author:'于浩东'
+// },2)
+
+
+
+const Class=require('./models/Class')
+const Student=require('./models/Student')
+
+Class.hasMany(Student);
+Student.belongsTo(Class)
+require('./mock/mockStudent')
