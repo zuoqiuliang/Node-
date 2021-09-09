@@ -169,13 +169,15 @@
 // const adminService=require('./services/adminService');
 
 // adminService.addAdmin({
-//     loginId:'bbb',
+//     loginId:'18232249132',
 //     loginPwd:'123456',
 //     name:'左'
 // }).then((res)=>{
 //     console.log(res)
 // })
-
+// adminService.updateAdmin(5,{
+//     loginPwd:'123456'
+// })
 // adminService.deleteAdmin(1);
 // adminService.updateAdmin(2)
 
@@ -209,9 +211,75 @@
 
 
 
-const Class=require('./models/Class')
-const Student=require('./models/Student')
+// const Class=require('./models/Class')
+// const Student=require('./models/Student')
 
-Class.hasMany(Student);
-Student.belongsTo(Class)
-require('./mock/mockStudent')
+// Class.hasMany(Student);
+// Student.belongsTo(Class)
+// require('./mock/mockStudent')
+
+// const adminServices=require('./services/adminService');
+
+// adminServices.login('18232249132','123456').then(res=>{
+//     console.log(res)
+
+// })
+
+// adminServices.getAdminById(2).then(res=>{
+//     console.log(res)
+// })
+
+
+// const stuServices=require('./services/studentService');
+// // stuServices.getAllStudents().then(res=>{
+// //     console.log(res)
+// // })
+
+// stuServices.getAllStudents(1,10,1).then(res=>{
+//     console.log(res)
+// })
+
+
+// const md5=require('md5');
+
+// console.log(md5('dsacsdavc 定位尺寸' ))
+
+
+// const moment=require('moment');
+
+// console.log(moment.utc().toString())
+
+// console.log(moment().valueOf())
+// console.log(moment.utc().valueOf())
+
+// const format=['YYYY-MM-DD HH:mm:ss','YYYY-M-D H:m:s','x'];// 数组中填写支持哪些令牌日期格式
+//  console.log(+moment.utc('1970-01',format,true))
+//  console.log(moment.utc('1970-1-1 00:00:00',format,true).toString())
+//  console.log(moment.utc('0',format,true).toString())
+
+// const m= moment.utc()
+// console.log(m.toString())
+// console.log(m.local().format('YYYY-MM-DD HH:mm:ss'))
+
+// const a= moment().valueOf();
+// const m=moment.utc(a)
+// console.log(m.format('YYYY-MM-DD HH:mm:ss'))
+
+// const m=moment.utc('2021-09-08 07:30:00')
+// console.log(m.local().fromNow())
+
+// require('./services/init')
+// const stuServices=require('./services/studentService');
+// stuServices.addStudent({//这里调用增加学生记录的方法
+//     name: '左亮亮',
+//     birthday: '1999-9-19',
+//     sex: true,
+//     mobile: '13715894568',
+//     classId:'12'
+// })
+
+//  stuServices.getAllStudents().then(res=>{
+//      console.log(res)
+//  })
+
+

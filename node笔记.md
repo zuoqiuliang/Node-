@@ -730,7 +730,7 @@ net.createServer()，返回一个scoket对象
    Sequelize支持js和ts 比较成熟
 	 TypeORM只支持ts  不成熟
 
-### 模型定义和同步
+### Sequelize模型定义和同步
   > 模型就是数据库中的表
  由于Sequelize和数据库没有关联，所以需要下载Sequelize和想要使用的数据驱动
 
@@ -827,7 +827,7 @@ net.createServer()，返回一个scoket对象
 	
    
 
-### 模型的增删改
+### Sequelize模型的增删改
 
 后端项目搭建结构
 ![avatar](http://m.qpic.cn/psc?/V51Mju1I4Uz5tx4Tu1Fj4XfvFp1oGJ7w/45NBuzDIW489QBoVep5mcVw*cM1KjdjwD86Q.uaAZU7sxvZm2MakE4ayhH4tu4.Ix1CmAhaNRM*rarhzlzNfPaz8MOZMnt.uwbf5JArsy4Q!/b&bo=oAU4BAAAAAABF6k!&rf=viewer_4)
@@ -852,8 +852,8 @@ net.createServer()，返回一个scoket对象
     ```
     - save 是一种异步方法. 实际上,几乎每个 Sequelize 方法都是异步的. build 是极少数例外之一.
 
-2. 模型的增加
-   向Admin模型中增加数据：
+2. 模型的增加、删除、修改
+   1. 向Admin模型中增加数据：
    ```js
       build方式：
       const Admin=require('./models/admin');
@@ -877,39 +877,509 @@ net.createServer()，返回一个scoket对象
       })
       
    ```
-   向Admin模型中删除数据记录：
+   2. 向Admin模型中删除数据记录：
    ```js
       方式一：使用模型方法创建出的条目上的方法删除
       const Admin=require('../models/admin')//导入Admin模型
-      const ins= await Admin.findByPk(adminId);//根据adminId主键返回一个记录条目
-      ins.destroy()//删除该条目，就把对应的记录删除了
-
+      async function(adminId){
+         const ins= await Admin.findByPk(adminId);//根据adminId主键返回一个记录条目
+         ins.destroy()//删除该条目，就把对应的记录删除了
+      }
 
       方式二：使用模型上的方法删除
-      Admin.destroy({
-         where:{ //筛选条件，要删除哪里的条件
-            id:adminId,//条件是id=adminId
-         }
-      })
+      async function(adminId){
+         Admin.destroy({
+            where:{ //筛选条件，要删除哪里的条件
+               id:adminId,//条件是id=adminId
+            }
+         })
+      }
    ```
 
-   向Admin模型中修改数据
+   3. 向Admin模型中修改数据
    ```js
    方式一：使用模型方法创建出的条目上的方法修改
    const Admin=require('../models/admin')//导入Admin模型
-   const ins= await Admin.findByPk(adminId);
-    ins.loginId='liang';
-    ins.save();
-
+   async function(adminId){
+      const ins= await Admin.findByPk(adminId);
+      ins.loginId='liang';
+      ins.save();
+   }
 
    方式二：使用模型上的方法修改
-   Admin.update(
-      {
-      loginId:'liang' //参数一是修改的内容
-      },{
-         where:{ //筛选条件,要修改哪里的条件
-            id:adminId,//条件是id=adminId
+   async function(adminId){
+      Admin.update(
+         {
+         loginId:'liang' //参数一是修改的内容
+         },{
+            where:{ //筛选条件,要修改哪里的条件
+               id:adminId,//条件是id=adminId
+            }
+         })
+   }
+   ```
+### 访问器和虚拟字段
+```js
+  这是学生表的模型
+   const Student=sequelize.define('Student',{
+	name:{
+		type:DataTypes.STRING,
+		allowNull:false
+	},
+	birthday:{
+		type:DataTypes.STRING,
+		allowNull:false,
+		get(){//访问器
+			return new Date(this.getDataValue('birthday')).getTime() //this指向模型对象,这里将获取到的生日转换为时间戳
+		}
+	},
+   age:{//虚拟字段，在数据库中不存在，有点类似于vue中的computed计算属性
+      type:DataTypes.VIRTUAL,
+      get(){
+         const nowtime=moment.utc();
+         const bir=moment.utc( this.birthday )
+         return nowtime.diff(bir,'y')//得到两个日期年份之间的差异
+      }
+   },
+    sex:{
+        type:DataTypes.BOOLEAN,
+		allowNull:false
+    },
+    mobile:{
+        type:DataTypes.STRING(11),
+		allowNull:false
+    }
+},{
+	createdAt:false,
+	updatedAt:false,
+	paranoid:true
+})
+
+```
+
+### Sequelize模型查询
+
+1. 查询单个数据 
+  
+   ```js
+   findOne方式 通过条件查某个记录
+   async function(loginId,loginPwd){
+   const  res= await Admin.findOne({
+      where:{//配置条件
+         loginId,
+         loginPwd
+      }
+   })
+   if(res.loginId===loginId&&res.loginPwd===loginPwd){//稍微验证账号密码大小写
+      return res.toJSON()
+   }
+   return null
+   }
+   ```
+
+   ```js
+   findByPk通过主键查某个记录
+   async function(Id){
+      const res=  await Admin.findByPk(Id)
+      return res.toJSON()
+   }
+
+   ```
+2. 查询多个数据
+
+   ```js
+   findAll 查出来结果是数组
+   async getManStudents(){//查询学生为男生的学生
+      const res= await Student.findAll({
+            where:{
+                sex:1
+            }
+        })
+        return JSON.stringify( res )
+    }
+
+   async getAllStudents(page=1,limit=10){//findAll分页查询
+      const res=  await Student.findAll({
+            offset:(page-1)*limit,//跳过行数
+            limit:+limit//获取几行
+        })
+        const total=await Student.count()//学生总数
+        const datas=JSON.stringify(res)//分页查询学生列表
+        return {
+            total,
+            datas
+        }
+    }
+
+
+   async getAllStudents(page=1,limit=10){//findAndCountAll分页查询
+      const res=  await Student.findAndCountAll({
+               offset:(page-1)*limit,//跳过行数
+               limit:+limit//获取几行
+         })
+         return {
+               total:res.count,
+               datas:JSON.parse(JSON.stringify(res.rows))
+         }
+   }
+
+
+   async getAllStudents(page=1,limit=10,sex){//分页查询，只查符合条件的记录
+     const res=  await Student.findAndCountAll({
+            where:{
+                sex//只要男生或女生
+            },
+            offset:(page-1)*limit,//跳过行数
+            limit:+limit//获取几行
+        })
+        return {
+            total:res.count,
+            datas:JSON.parse(JSON.stringify(res.rows))
+        }
+   }
+
+
+
+   async getAllStudents(page=1,limit=10,sex){//分页查询，只查符合条件、想要的字段的记录
+     const res=  await Student.findAndCountAll({
+            attributes:['id','name','birthday','sex'],//只查询想要的字段
+            where:{
+                sex
+            },
+            offset:(page-1)*limit,//跳过行数
+            limit:+limit//获取几行
+        })
+        return {
+            total:res.count,
+            datas:JSON.parse(JSON.stringify(res.rows))
+        }
+   }
+
+
+
+
+   async getAllStudents(page=1,limit=10,sex){
+      const res=  await Student.findAndCountAll({
+            attributes:['id','name','birthday','sex'],//只查询想要的字段
+            where:{
+                sex
+            },
+            include:[Class],//联表查询，学生表关联着班级表
+            offset:(page-1)*limit,//跳过行数
+            limit:+limit//获取几行
+        })
+        return {
+            total:res.count,
+            datas:JSON.parse(JSON.stringify(res.rows))
+        }
+   }
+   ```
+
+### Mock
+```js
+   const mock=require('mockjs')
+   const stuArr= mock.mock({//mock学生表的数据
+      'data|300-500':[
+         {
+            name:'@cname',//随机名字
+            birthday:'@date',//随机日期
+            'sex|1-2':true,
+            mobile:/1\d{10}/,//正则表达式一个手机号
+            'ClassId|1-16':0,//生成student表外键，由于clas表Id是1-16，所以随机1-16中的数
+         }
+      ]
+   }).data
+
+   const arr=mock.mock({//mock班级表数据
+      'data|16':[{//长度为16的数组
+         'id|+1':1,//id起始为1，每个对象id递增
+         'name':'网络S17-@id 班',//@id代表和id属性值使用同一个值
+         'openDate':'@datetime()'//随机时间
+      }]
+   }).data
+
+```
+
+
+
+### 数据抓取
+```js
+const axios=require('axios');
+const cheerio=require('cheerio');
+
+async function fetchBooks(){//获取豆瓣页面源码
+ const res= await   axios.get(
+        'https://book.douban.com/latest',
+
+    )
+    // console.log(res.data)
+    return res.data
+}
+
+
+ async function getBookListLinks(){//根据豆瓣页面HTML获得一个书籍链接详情页列表
+   const html= await fetchBooks();
+   let $= cheerio.load(html)
+   const lis= $('#content .grid-12-12 li a')
+   const links= lis.map((i,ele)=>{
+      return ele.attribs['href'] 
+   }).get()
+   return links
+}
+
+
+async function getBookDetail(url){//得到详情页的信息
+  const html= await axios.get(url)
+   const $= cheerio.load(html.data);
+   const name=$('h1').text().trim()
+    const imgurl=$('#mainpic .nbg img').attr('src')
+   const spans= $('#info span.pl');
+   const authorSpan= spans.filter((i,ele)=>{
+       return $(ele).text().includes('作者')
+   })
+   const author=authorSpan.next('a').text()
+   const publishSpan= spans.filter((i,ele)=>{
+        return $(ele).text().includes('出版年')
+    })
+    const publishDate=publishSpan[0].nextSibling.nodeValue
+   console.log(name,imgurl,author,publishDate)
+
+
+      return{
+            name,
+            imgurl,
+            author,
+            publishDate
+      }
+}
+    
+async function getAllBookInfo(){//得到书籍列表
+  const links=  await getBookListLinks();
+   const proms= links.map((item)=>{
+         return getBookDetail(item)
+   })
+   return Promise.all(proms)
+}
+
+
+getAllBookInfo().then(res=>{
+    console.log(res)
+    
+})
+
+
+
+```
+
+
+
+
+### MD5加密
+md5加密特点：
+ 1. hash加密的一种
+ 2. 可以将任何一个字符串加密成固定长度的字符串
+ 3. 单项加密(只能加密不能解密)
+ 4. 相同源字符串加密后得到相同的字符串
+ ```js
+   const md5=require('md5');
+
+    md5('dsacsdavc 定位尺寸' ) //返回一个固定长度的字符串42365550b90ff07feb8aa0dc4a9e2af6
+
+ ```
+
+
+
+### moment
+
+1. utc、北京时间、等时间概念
+   1. utc和北京时间
+      > utc世界协调时，以英国格林威治时间为准，utc时间比北京时间早8个小时，如 utc时间凌晨相当于北京时间上午8点
+   2. 时间戳
+      > 某个时间到utc1970-01-01凌晨经过的毫秒数，时间戳表示的utc时间差异
+   3. 对于服务器影响
+      > 服务器可能会部署到世界任何位置，服务器内部应统一使用utc时间或时间戳，包括数据库
+   4. 对于客户端影响
+      > 客户端要给不同地区客户友好的显示时间，客户端应把utc时间或时间戳转换为本地时间显示
+
+2. moment使用
+   ```js
+   导入下载moment包
+   npm i moment
+   const moment =require('moment')
+   moment().valueOf()//得到本地时间戳
+   moment.utc().valueOf()//得到utc时间戳，服务器中使用utc的方式得到时间戳
+
+
+   根据指定的时间格式得到时间戳
+   moment('1970-01-01 00:00:00').valueOf() //得到-28800000，北京时间1970-01-01 08:00:00时间戳是0，1970-01-01 00:00:00时间戳-28800000
+   moment.utc('1970-01-01 00:00:00').valueOf() //得到0,因为utc时间1970-01-01 00:00:00的时间戳是0
+
+
+   因此服务器我们通常默认是utc格式，才不会出错！！！
+
+   使用令牌日期格式转换：
+   const format=['YYYY-MM-DD HH:mm:ss','YYYY-M-D H:m:s','x']; 数组中填写支持哪些令牌日期格式
+   moment.utc('1970-01-01 00:00:00',format,true).toString()//得到标准日期 Thu Jan 01 1970 00:00:00 GMT+0000,如果第一个参数不按照format中格式填写返回Invalid date，如果转换为数字则返回NaN
+   moment.utc('1970-01-01 00:00:00',format,true).toString().isValid()//判断是否是有效日期格式,返回true或false，如果第一个参数不按照for名at中格式填写返回Invalid date，如果转换为数字则返回NaN
+
+
+   显示：
+   const m=moment.utc('1970-01-01 00:00:00',format,true)//得到moment对象
+   m.format('YYYY-MM-DD')//显示出想要的时间格式
+
+
+   客户端利用utc函数将本地时间转换成utc时间
+   const a= moment().valueOf();
+   const m=moment.utc(a)
+   console.log(m.format('YYYY-MM-DD HH:mm:ss'))
+
+   客户端利用local()将utc时间转换成本地时间
+   const m= moment.utc()
+   console.log(m.toString())
+   console.log(m.local().format('YYYY-MM-DD HH:mm:ss'))
+
+
+   总结：客户端利用local()函数将utc时间转换成本地时间，客户端用utc()将本地时间转换成utc时间
+
+
+   查看距离当前时间多久
+   const m=moment.utc('2021-09-08 07:30:00')//utc函数传入utc时间
+   console.log(m.local().fromNow())
+   ```
+
+
+### 数据验证
+验证可以在前端、后端业务逻辑层、数据库三个地方做数据验证
+
+我们作为前端在学node只考虑后端业务逻辑层即可。
+```js
+   const validate=require(validata.js)//这个库验证对象的
+   const moment =require('moment')//时间的库
+
+      // 这是一个扩展，扩展validate库中validators配置里面的datetime
+      validate.extend(validate.validators.datetime,{
+         /**
+          * 该函数自动用于日期格式转换
+          * 它会在验证时自动触发，它需要将任何数据转换为时间戳返回
+          * 如果无法转换返回NaN
+          * @param {*} value  传入要验证的值
+          * @param {*} options 验证配置
+          */
+         
+         parse(value,options){
+            let format=['YYYY-M-D H:m:s','YYYY-MM-DD HH:mm:ss','x'];
+            if(options.dateOnly){
+                  format=['YYYY-M-D','YYYY-MM-DD','x'];
+            }
+            return +moment.utc(value,format,true)
+         },
+         /**
+          * 用户显示错误消息时，使用的显示字符串
+          * @param {*} value 
+          * @param {*} options 
+          */
+         format(value,options){
+            let format='YYYY-MM-DD';
+            if(!options.dateOnly){
+                  format='YYYY-MM-DD HH:mm:ss'
+            }
+            return moment.utc(value).local().format(format)
          }
       })
 
-   ```
+
+
+    async addStudent(mainObj) {//向学生表中增加数据时做验证
+
+      const rule={//验证规则
+         name:{//验证name属性
+            presence:{
+               allowEmpty:false//代表是否存在,是否为空，false表示不可为空
+            },
+            type:'string',//代表name这个属性必须为字符串
+         },
+         birthday:{//验证birthday属性
+            presence:{
+               allowEmpty:false//代表是否存在,是否为空，false表示不可为空
+            },
+            datetime:{
+               dateOnly:true,//只写日期就通过验证
+               earliest:+moment.utc().subtract(100,'y'),//代表从当前时间回退100年的时间戳作为最早时间
+               latest:+moment.utc().subtract(5,'y'),//从当前时间回退5年的时间戳作为最晚时间
+
+            }
+         },
+
+      }
+
+      const res=validate.validate(mainObj,rule)如果通过规则，res返回undefined，如果没有通过返回对象
+        await Student.create(mainObj)
+        console.log('增加了一条学生数据')
+    },
+
+      addStudent({//这里调用增加学生记录的方法
+            name: '左亮亮',
+            birthday: '1999-9-19',
+            sex: true,
+            mobile: '13715894568'
+      })
+
+```
+   
+   
+### 日志记录
+
+使用log4js库，只对nodejs有作用，因为前端js不需要
+
+```js
+const log4js=require('log4js')
+const path=require('path')
+log4js.configure({
+    appenders:{//出口
+        sql:{//定义一个sql日志出口
+            type:'file',//如果type值为datefile则会在自动备份时后缀名加当前日期
+            filename:path.resolve(__dirname,'logs','sql','logging.log'),
+            layout:{
+                type:'pattern',
+                pattern:'%d{yyyy-MM-dd hh.mm.ss} %c %p %m%n'
+            },
+            maxLogSize:1024,//配置文件最大字节数1024个字节，防止日志越写越多无限多，1024个字节=1kb，1024kb=1Mb
+            keepFileExt:true,//保留log文件后缀名，如果有type:datefile配置时将显示   文件名.日期.log 这种格式
+            daysToKeep:1,//只保留之前一个日志，设置几就保留之前几个日志文件
+        },
+        default:{//定义一个default日志出口
+            type:'stdout',//命令行输出
+        }
+    },
+    categories:{//分类
+        sql:{//分类名为sql
+            appenders:['sql'],//该分类使用出口sql的配置写入日志
+            level:'all'
+        },
+        default:{//分类名为default
+            appenders:['default'],//该分类使用出口default的配置写入日志
+            level:'all'
+        }
+    }
+})
+
+
+
+// logger.level='all'//打印的级别是all，代表大于等于all的级别的信息会被打印
+
+process.on('exit',()=>{
+    log4js.shutdown()
+})
+const sqllogger=log4js.getLogger('sql')//得到sql日志记录对象
+const defaultlogger=log4js.getLogger()//得到default日志记录对象，不填参数代表得到default相关日志
+
+sqllogger.info('配置的在文件输出 --sql')//打印的类型是info,默认打印在命令行
+defaultlogger.info('默认在命令行输出--default')
+
+
+```
+
+
+
+### express
+

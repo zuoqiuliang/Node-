@@ -1,8 +1,12 @@
 {
     "cSpell.words": [
+        "appenders",
         "cpus",
+        "datetime",
         "extname",
+        "nowtime",
         "readdir",
-        "tmpdir"
+        "tmpdir",
+        "validata"
     ]
 }

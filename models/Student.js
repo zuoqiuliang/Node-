@@ -8,7 +8,10 @@ const Student=sequelize.define('Student',{
 	},
 	birthday:{
 		type:DataTypes.STRING,
-		allowNull:false
+		allowNull:false,
+		get(){//访问器
+			return new Date(this.getDataValue('birthday')).getTime() //this指向模型对象,这里将获取到的生日转换为时间戳
+		}
 	},
     sex:{
         type:DataTypes.BOOLEAN,
