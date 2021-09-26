@@ -43,8 +43,9 @@ module.exports = {
    
          const res=validate.validate(mainObj,rule)
          console.log(res)
-        // await Student.create(mainObj)
-        // console.log('增加了一条学生数据')
+       const ins= await Student.create(mainObj)
+        console.log('增加了一条学生数据')
+        return ins.toJSON()
     },
     async deleteStudent(mainId) {
         await Student.destroy({
@@ -71,30 +72,35 @@ module.exports = {
         return JSON.stringify( res )
     },
     async getAllStudents(page=1,limit=10,sex){//分页查询
-      const res=  await Student.findAll({
+    //   const res=  await Student.findAll({
+    //         offset:(page-1)*limit,//跳过行数
+    //         limit:+limit//获取几行
+    //     })
+    //     const total=await Student.count()//学生总数
+    //     const datas=JSON.parse( JSON.stringify(res) )//分页查询学生列表
+    //     return {
+    //         total,
+    //         datas
+    //     }
+        const res=  await Student.findAndCountAll({
+            attributes:['id','name','birthday','sex'],//只查询想要的字段
+            where:{
+                sex
+            },
+            include:[Class],
             offset:(page-1)*limit,//跳过行数
             limit:+limit//获取几行
         })
-        const total=await Student.count()//学生总数
-        const datas=JSON.parse( JSON.stringify(res) )//分页查询学生列表
+        console.log(res)
         return {
-            total,
-            datas
+            total:res.count,
+            datas:JSON.parse(JSON.stringify(res.rows))
         }
-        // const res=  await Student.findAndCountAll({
-        //     attributes:['id','name','birthday','sex'],//只查询想要的字段
-        //     where:{
-        //         sex
-        //     },
-        //     include:[Class],
-        //     offset:(page-1)*limit,//跳过行数
-        //     limit:+limit//获取几行
-        // })
-        // return {
-        //     total:res.count,
-        //     datas:JSON.parse(JSON.stringify(res.rows))
-        // }
         
+    },
+    async getStudentById(id){
+      const res= await  Student.findByPk(id)
+      return res
     }
 
 }

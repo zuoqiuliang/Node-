@@ -37,8 +37,10 @@ exports.login=async function(loginId,loginPwd){
   })
   if(res.loginId===loginId&&res.loginPwd===loginPwd){//稍微验证账号密码大小写
     return res.toJSON()
+  }else{
+    return Null
+
   }
-  return null
 }
 
 exports.getAdminById=async function(Id){

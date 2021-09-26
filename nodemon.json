@@ -1,0 +1,16 @@
+{
+    "env":{
+        "NODE_NEV":"development"
+    },
+    "watch":[
+        "*js",
+        "*json"
+    ],
+    "ignore":[
+        "package.json",
+        "package*.json",
+        "nodemon.json",
+        "node_modules",
+        "public"
+    ]
+}

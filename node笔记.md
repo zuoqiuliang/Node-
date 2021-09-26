@@ -1365,9 +1365,8 @@ log4js.configure({
 
 
 
-// logger.level='all'//打印的级别是all，代表大于等于all的级别的信息会被打印
 
-process.on('exit',()=>{
+process.on('exit',()=>{//当意外情况发生时，保证记录完再关闭，一般程序员都不注意
     log4js.shutdown()
 })
 const sqllogger=log4js.getLogger('sql')//得到sql日志记录对象
@@ -1380,6 +1379,193 @@ defaultlogger.info('默认在命令行输出--default')
 ```
 
 
+## express
 
-### express
+#### express基本使用
 
+ ```js
+   const express = require('express');
+   const app = express();
+   
+     app.请求方法('请求路径',处理函数)  如：app.get('*',()=>{})  *号代表所有路径都可接收   ---静态路由      
+     app.请求方法('请求路径/:参数',处理函数) ---动态路由
+     配置一个请求映射，如果请求方法和请求路径均满足匹配，交给回调函数进行处理
+     回调函数参数，req和res都是被express封装过的对象
+    
+      app.get('/abc',(req,res)=>{
+      这里会一直监听请求，比方说我们在浏览器请求了localhost:1234/abc，这里req就会收到消息
+      console.log(req.headers)//获取请求头
+      console.log(req.path)//获取请求路径
+      console.log(req.query)//获取请求参数，得到一个对象
+      console.log(req.params)//获取动态路由部分
+
+
+       响应部分
+      res.setHeader("a","1")//手动设置响应头属性，可以设置可以不设置，用到时想到即可
+      send函数内部调用了res.end(),所以如果不调用res.send()就调用res.end()表示发送
+      res.send([{ 
+          id:123,
+          name:'zql'
+      }])
+
+       重定向区域 3种方式
+      // res.status(状态码)返回的还是res对象，可以链式编程；
+      // res.status(状态码).header()返回的还是res对象，可以链式编程
+      res.status(302).header('location','https://www.baidu.com').send()//临时重定向到百度
+      res.location('https://www.baidu.com').send()//简写临时重定向
+      res.redirect(302,'https://www.baidu.com')//简写到极致，直接重定向到百度
+   })
+   app.listen('1234',()=>{
+      console.log('1234端口被监听了')
+   })
+
+
+ ```
+
+
+#### nodemon
+
+nodemon是一个监视器，用于监控工程中的文件变化，如果发现文件有变化，可以执行一段脚本
+
+运行
+ ```js 
+   npx nodemon 文件名
+
+   ``` 
+把nodemon当做node使用即可
+
+
+#### express中间件
+
+app.get函数允许有多个回调函数，每一个回调函数都是一个中间件,而且回调函数接收第三个参数next，调用next表示执行下一个中间件(回调函数);第一个参数是中间件接收错误的参数
+ ```js
+ 
+   const express = require('express');
+   const app = express();
+   app.get('路径',(err,req,res,next)=>{
+      console.log('这是第一个中间件')
+   },(err,req,res,next)=>{
+      console.log('这是第二个中间件')
+   },(err,req,res,next)=>{
+      console.log('这是第三个中间件')
+   })
+
+
+ ```
+当匹配到了请求(app.请求方法和请求路径)后，交给第一个处理函数，如果有需要可以调用next()交给下一个中间件(回调函数)处理
+
+- 中间件处理的细节
+  1. 所有中间件都会运行(如果匹配成功)，即使前面中间件end()或send()了，后面中间件也会运行(如果匹配成功)，但是不会发送消息码了，也不可以再调用send()或end()
+  2. 如果后续没有中间件了，express发现这个中间件没有调用end()或send()表示响应没有结束则express会处理响应给客户端404;
+  
+  3. 如果中间件发生了错误，不会停止服务器，相当于调用了next(new throw('错误信息'))，express会寻找后续错误处理的中间件，如果没有则响应客户端500
+  
+
+  **一般使用中间件都这样使用**
+  use方法匹配任何方法
+  ```js
+      app.use('路径'，中间件)//参数1路径是baseUrl基础路径，表示完全匹配基础路径就执行参数2中间件
+      app.use(中间件) //不写第一个路径参数，表示所有路径都可以使用这个中间件
+  ```
+
+
+#### express中自带中间件(常用)
+
+  1. express.static()
+       - express.static()是响应静态资源的中间件，参数是静态资源目录(目录就是文件夹)
+
+       - 当请求时，会根据路径从指定的目录中寻找是否存在该文件，如果存在直接响应文件内容，后续中间件则不执行；
+         如果文件不存在则移交给后续中间件处理
+         默认情况下，如果参数路径是一个目录，会自动使用该目录下index.html页面
+       ```js
+         const express = require('express');
+         const app = express();
+         const path=require('path')
+         const staticRoot=path.resolve(__dirname,'../public')
+         
+         app.use(express.static(staticRoot));
+         app.use('/static',express.static(staticRoot))
+
+       ```
+  2. express.json()
+      ```js
+      如果是json格式请求体
+      会将请求体转换为json格式并给下一个中间件的res.body
+         app.use(express.json())
+
+      ```
+
+
+  3. express.urlencoded()
+
+      ```js
+      如果是x-www-form-urlencoded格式请求体
+      会将post请求中请求体的参数变成x-www-form-urlencoded格式放到中间件的req.body中
+      app.use(express.urlencoded({
+         extended:true
+      }))
+
+      ```
+
+
+#### express路由
+
+```js
+   const express=require('express')
+   const studentRouter=express.Router()//使用express中的路由
+   studentRouter.post('/',(req,res)=>{
+      console.log('添加单个学生')
+   })
+
+
+   studentRouter.delete('/:id',(req,res)=>{
+      console.log('删除单个学生')
+   })
+
+   studentRouter.put('/:id',(req,res)=>{
+      console.log('修改单个学生')
+   })
+   app.use('/api/student',studentRouter)
+
+
+   但是在日常开发中，express路由是需要使用模块的，可以看node学习时的文件。
+```
+
+#### cookie的基本概念
+
+[node学习cookie](https://gitee.com/zuoqiuliang/node-cookie/blob/master/cookie%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5.md)
+
+#### 实现登录和认证
+
+```js
+      const express=require('express')
+      const adminRouter=express.Router()引入express中的路由
+      const adminServer=require('../../services/adminService')引入业务层admin处理方法
+      const {sendError,getResult}=require('../getSendResult')引入封装的响应客户端的统一消息格式
+      const cookieParser=require('cookie-parser');加入cookie-parser中间件，返回值调用后返回中间件
+      app.use(cookieParser())加入之后会在req对象中注入cookies属性，用于所有请求传过来的cookie；会在res对象中注入cookie方法，用于设置cookie
+      
+      adminRouter.post('/login',async (req,res)=>{
+      const result= await adminServer.login(req.body.loginId,req.body.loginPwd)
+         if(result){
+            const value=result.id
+            由于浏览器喜欢cookie,因为cookie在浏览器自动存储、自动发送；其他终端不支持cookie，支持header，
+            所以有一个不成文规定，浏览器使用cookie，其他终端使用header
+               res.cookie('token',value,{
+                  path:'/',
+                  domain:'localhost',
+                  maxAge:1000*60*60,//毫秒数
+                     httpOnly:true
+               })
+            适配其他终端，如智能手表等乱七八糟的
+               res.header('authorization',value)
+         }
+         res.send(getResult(result))
+
+      })
+
+```
+
+#### CORS
+
+[CORS](https://gitee.com/zuoqiuliang/node-cookie/blob/master/CORS%E5%8E%9F%E7%90%86%E8%AF%A6%E8%A7%A3.md)
